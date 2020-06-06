@@ -1,122 +1,151 @@
 /* eslint-disable jsx-a11y/label-has-associated-control */
-import React from 'react';
+import React, { useState } from 'react';
 import Logo from '../../components/Logo';
+import BasicInput from '../../components/BasicInput';
+import BasicSelect from '../../components/BasicSelect';
+import CollectPoint from '../../components/CreatePoint/CollectPoint';
 import './style.css';
 
-const CreatePoint = () => (
-  <div id="page-create-point">
-    <Logo />
+const CreatePoint = () => {
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [whats, setWhats] = useState('');
+  const [uf, setUF] = useState('0');
+  const [city, setCity] = useState('0');
+  const [selectedItems, setSelectedItems] = useState<number[]>([]);
 
-    <form>
-      <h1>
-        Cadastro do
-        <br />
-        ponto de coleta
-      </h1>
+  const items = [
+    {
+      id: 1,
+      title: 'Lâmpadas',
+      image: 'http://localhost:3333/assets/lampadas.svg',
+    },
+    {
+      id: 2,
+      title: 'Pilhas e Baterias',
+      image: 'http://localhost:3333/assets/baterias.svg',
+    },
+    {
+      id: 3,
+      title: 'Papéis e Papelão',
+      image: 'http://localhost:3333/assets/papeis-papelao.svg',
+    },
+    {
+      id: 4,
+      title: 'Resíduos Eletrônicos',
+      image: 'http://localhost:3333/assets/eletronicos.svg',
+    },
+    {
+      id: 5,
+      title: 'Resíduos Orgânicos',
+      image: 'http://localhost:3333/assets/organicos.svg',
+    },
+    {
+      id: 6,
+      title: 'Óleo de Cozinha',
+      image: 'http://localhost:3333/assets/oleo.svg',
+    },
+  ];
 
-      <fieldset>
-        <legend><h2>Dados</h2></legend>
-        <div className="field">
-          <label htmlFor="name">
-            Nome da entidade
-          </label>
-          <input
-            type="text"
+  const handleSelectedItems = (id: number) => {
+    let tempItems = [...selectedItems];
+    if (selectedItems.includes(id)) {
+      tempItems = selectedItems.filter((i) => i !== id);
+      return setSelectedItems(tempItems);
+    }
+
+    return setSelectedItems([
+      ...selectedItems,
+      id,
+    ]);
+  };
+
+  return (
+    <div id="page-create-point">
+      <Logo />
+
+      <form>
+        <h1>
+          Cadastro do
+          <br />
+          ponto de coleta
+        </h1>
+
+        <fieldset>
+          <legend><h2>Dados</h2></legend>
+          <BasicInput
             id="name"
-            name="name"
+            label="Nome da entidade"
+            value={name}
+            onChange={setName}
           />
-        </div>
 
-        <div className="field-group">
-          <div className="field">
-            <label htmlFor="email">
-              E-mail
-            </label>
-            <input
-              type="email"
+          <div className="field-group">
+            <BasicInput
               id="email"
-              name="email"
+              label="E-mail"
+              value={email}
+              onChange={setEmail}
             />
-          </div>
-
-          <div className="field">
-            <label htmlFor="whatsapp">
-              WhatsApp
-            </label>
-            <input
-              type="text"
+            <BasicInput
               id="whatsapp"
-              name="whatsapp"
+              label="WhatsApp"
+              value={whats}
+              onChange={setWhats}
             />
           </div>
-        </div>
-      </fieldset>
+        </fieldset>
 
-      <fieldset>
-        <legend>
-          <h2>Endereço</h2>
-          <span>Selecione o endereço no mapa</span>
-        </legend>
+        <fieldset>
+          <legend>
+            <h2>Endereço</h2>
+            <span>Selecione o endereço no mapa</span>
+          </legend>
 
-        <div className="field-group">
-          <div className="field">
-            <label htmlFor="uf">
-              Estado (UF)
-            </label>
-            <select name="uf" id="uf">
-              <option value="0"> Selecione uma UF </option>
-            </select>
+          <div className="field-group">
+            <BasicSelect
+              id="uf"
+              label="Estado (UF)"
+              options={[{ value: 0, text: 'Selecione uma UF' }]}
+              value={uf}
+              onChange={setUF}
+            />
+            <BasicSelect
+              id="city"
+              label="Cidade"
+              options={[{ value: 0, text: 'Selecione uma cidade' }]}
+              value={city}
+              onChange={setCity}
+            />
           </div>
-          <div className="field">
-            <label htmlFor="city">
-              Cidade
-            </label>
-            <select name="city" id="city">
-              <option value="0"> Selecione uma cidade </option>
-            </select>
-          </div>
-        </div>
-      </fieldset>
+        </fieldset>
 
-      <fieldset>
-        <legend>
-          <h2>Itens de Coleta</h2>
-          <span>Selecione um ou mais itens abaixo</span>
-        </legend>
+        <fieldset>
+          <legend>
+            <h2>Itens de Coleta</h2>
+            <span>Selecione um ou mais itens abaixo</span>
+          </legend>
 
-        <ul className="items-grid">
-          <li>
-            <img src="http://localhost:3333/assets/oleo.svg" alt="Óleo" />
-            <span>Óleo</span>
-          </li>
-          <li>
-            <img src="http://localhost:3333/assets/oleo.svg" alt="Óleo" />
-            <span>Óleo</span>
-          </li>
-          <li>
-            <img src="http://localhost:3333/assets/oleo.svg" alt="Óleo" />
-            <span>Óleo</span>
-          </li>
-          <li>
-            <img src="http://localhost:3333/assets/oleo.svg" alt="Óleo" />
-            <span>Óleo</span>
-          </li>
-          <li>
-            <img src="http://localhost:3333/assets/oleo.svg" alt="Óleo" />
-            <span>Óleo</span>
-          </li>
-          <li>
-            <img src="http://localhost:3333/assets/oleo.svg" alt="Óleo" />
-            <span>Óleo</span>
-          </li>
-        </ul>
-      </fieldset>
+          <ul className="items-grid">
+            {items.map((i) => (
+              <CollectPoint
+                key={i.id}
+                id={i.id}
+                isSelected={selectedItems.includes(i.id)}
+                image={i.image}
+                title={i.title}
+                setSelected={handleSelectedItems}
+              />
+            ))}
+          </ul>
+        </fieldset>
 
-      <button type="submit">
-        Cadastrar ponto de coleta
-      </button>
-    </form>
-  </div>
-);
+        <button type="submit">
+          Cadastrar ponto de coleta
+        </button>
+      </form>
+    </div>
+  );
+};
 
 export default CreatePoint;
