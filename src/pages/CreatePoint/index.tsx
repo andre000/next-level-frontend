@@ -1,57 +1,68 @@
 /* eslint-disable jsx-a11y/label-has-associated-control */
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { LatLngLiteral } from 'leaflet';
+import { useHistory } from 'react-router-dom';
 import Logo from '../../components/Logo';
 import BasicInput from '../../components/BasicInput';
 import BasicSelect from '../../components/BasicSelect';
 import CollectPoint from '../../components/CreatePoint/CollectPoint';
+import PointMap from '../../components/CreatePoint/PointMap';
+import { api, locationApi } from '../../services';
 import './style.css';
 
-const CreatePoint = () => {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [whats, setWhats] = useState('');
+const CreatePoint: React.FC = () => {
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    whats: '',
+  });
+
   const [uf, setUF] = useState('0');
   const [city, setCity] = useState('0');
   const [selectedItems, setSelectedItems] = useState<number[]>([]);
+  const [items, setItems] = useState<Item[]>([]);
+  const [ufList, setUfList] = useState<IBGEUFResponse[]>([]);
+  const [cityList, setCityList] = useState<IBGECityResponse[]>([]);
+  const [point, setPoint] = useState<LatLngLiteral>();
+  const [initialPosition, setInitialPosition] = useState<LatLngLiteral>();
+  const [isLoading, setIsLoading] = useState(false);
 
-  const items = [
-    {
-      id: 1,
-      title: 'Lâmpadas',
-      image: 'http://localhost:3333/assets/lampadas.svg',
-    },
-    {
-      id: 2,
-      title: 'Pilhas e Baterias',
-      image: 'http://localhost:3333/assets/baterias.svg',
-    },
-    {
-      id: 3,
-      title: 'Papéis e Papelão',
-      image: 'http://localhost:3333/assets/papeis-papelao.svg',
-    },
-    {
-      id: 4,
-      title: 'Resíduos Eletrônicos',
-      image: 'http://localhost:3333/assets/eletronicos.svg',
-    },
-    {
-      id: 5,
-      title: 'Resíduos Orgânicos',
-      image: 'http://localhost:3333/assets/organicos.svg',
-    },
-    {
-      id: 6,
-      title: 'Óleo de Cozinha',
-      image: 'http://localhost:3333/assets/oleo.svg',
-    },
-  ];
+  const history = useHistory();
+
+  useEffect(() => {
+    api.get('/items')
+      .then(({ data }) => {
+        setItems(data || []);
+      });
+  }, []);
+
+  useEffect(() => {
+    locationApi.get('estados', {
+      params: { orderBy: 'nome' },
+    }).then(({ data }) => setUfList(data || []));
+  }, []);
+
+  useEffect(() => {
+    if (uf === '0') {
+      setCityList([]);
+      return;
+    }
+
+    locationApi.get(`estados/${uf}/municipios`, {
+      params: { orderBy: 'nome' },
+    }).then(({ data }) => setCityList(data || []));
+  }, [uf]);
+
+  useEffect(() => {
+    navigator.geolocation.getCurrentPosition((pos) => {
+      const { latitude: lat, longitude: lng } = pos.coords;
+      setInitialPosition({ lat, lng });
+    });
+  }, []);
 
   const handleSelectedItems = (id: number) => {
-    let tempItems = [...selectedItems];
     if (selectedItems.includes(id)) {
-      tempItems = selectedItems.filter((i) => i !== id);
-      return setSelectedItems(tempItems);
+      return setSelectedItems(selectedItems.filter((i) => i !== id));
     }
 
     return setSelectedItems([
@@ -60,11 +71,47 @@ const CreatePoint = () => {
     ]);
   };
 
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!point?.lat || !point?.lng) {
+      return;
+    }
+
+    setIsLoading(true);
+    const savedPoint: Point = {
+      uf,
+      city,
+      email: formData.email,
+      name: formData.name,
+      whatsapp: formData.whats,
+      image: '',
+      latitude: `${point.lat}`,
+      longitude: `${point.lng}`,
+      items: selectedItems,
+    };
+
+    api.post('/points', savedPoint)
+      .then(() => {
+        setUF('0');
+        setCity('0');
+        setFormData({
+          name: '',
+          email: '',
+          whats: '',
+        });
+        setSelectedItems([]);
+        setPoint(undefined);
+      });
+
+    setIsLoading(false);
+    history.push('/');
+  };
+
   return (
     <div id="page-create-point">
       <Logo />
 
-      <form>
+      <form onSubmit={handleSubmit}>
         <h1>
           Cadastro do
           <br />
@@ -76,22 +123,22 @@ const CreatePoint = () => {
           <BasicInput
             id="name"
             label="Nome da entidade"
-            value={name}
-            onChange={setName}
+            value={formData.name}
+            onChange={(name) => setFormData({ ...formData, name })}
           />
 
           <div className="field-group">
             <BasicInput
               id="email"
               label="E-mail"
-              value={email}
-              onChange={setEmail}
+              value={formData.email}
+              onChange={(email) => setFormData({ ...formData, email })}
             />
             <BasicInput
               id="whatsapp"
               label="WhatsApp"
-              value={whats}
-              onChange={setWhats}
+              value={formData.whats}
+              onChange={(whats) => setFormData({ ...formData, whats })}
             />
           </div>
         </fieldset>
@@ -102,18 +149,36 @@ const CreatePoint = () => {
             <span>Selecione o endereço no mapa</span>
           </legend>
 
+          <PointMap
+            point={point}
+            setPoint={setPoint}
+            initialPosition={initialPosition}
+          />
+
           <div className="field-group">
             <BasicSelect
               id="uf"
               label="Estado (UF)"
-              options={[{ value: 0, text: 'Selecione uma UF' }]}
+              options={
+                [
+                  { value: '0', text: 'Selecione um Estado' },
+                  ...ufList.map((ufItem) => ({ value: ufItem.sigla, text: ufItem.nome })),
+                ]
+              }
               value={uf}
               onChange={setUF}
             />
             <BasicSelect
               id="city"
               label="Cidade"
-              options={[{ value: 0, text: 'Selecione uma cidade' }]}
+              options={
+                cityList.length === 0
+                  ? [{ value: '0', text: 'Selecione um Estado' }]
+                  : [
+                    { value: '0', text: 'Selecione uma Cidade' },
+                    ...cityList.map((cityItem) => ({ value: cityItem.nome, text: cityItem.nome })),
+                  ]
+              }
               value={city}
               onChange={setCity}
             />
@@ -140,7 +205,7 @@ const CreatePoint = () => {
           </ul>
         </fieldset>
 
-        <button type="submit">
+        <button type="submit" disabled={isLoading}>
           Cadastrar ponto de coleta
         </button>
       </form>
