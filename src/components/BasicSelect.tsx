@@ -20,7 +20,7 @@ type BasicSelectType = PropTypes.InferProps<typeof basicSelectPropTypes>;
 const BasicSelect: React.FC<BasicSelectType> = ({
   id, label, value, onChange, options,
 }) => {
-  const handleChange = (event: any) => {
+  const handleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     onChange(event.target.value);
   };
 

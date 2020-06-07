@@ -14,7 +14,7 @@ type BasicInputType = PropTypes.InferProps<typeof basicInputPropTypes>;
 const BasicInput: React.FC<BasicInputType> = ({
   id, label, value, onChange,
 }) => {
-  const handleChange = (event: any) => {
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     onChange(event.target.value);
   };
 
