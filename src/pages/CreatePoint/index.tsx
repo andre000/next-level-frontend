@@ -7,6 +7,7 @@ import BasicInput from '../../components/BasicInput';
 import BasicSelect from '../../components/BasicSelect';
 import CollectPoint from '../../components/CreatePoint/CollectPoint';
 import PointMap from '../../components/CreatePoint/PointMap';
+import PointDropzone from '../../components/CreatePoint/PointDropzone';
 import { api, locationApi } from '../../services';
 import './style.css';
 
@@ -26,6 +27,7 @@ const CreatePoint: React.FC = () => {
   const [point, setPoint] = useState<LatLngLiteral>();
   const [initialPosition, setInitialPosition] = useState<LatLngLiteral>();
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File>();
 
   const history = useHistory();
 
@@ -73,7 +75,8 @@ const CreatePoint: React.FC = () => {
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!point?.lat || !point?.lng) {
+
+    if (!point?.lat || !point?.lng || !selectedFile) {
       return;
     }
 
@@ -90,7 +93,21 @@ const CreatePoint: React.FC = () => {
       items: selectedItems,
     };
 
-    api.post('/points', savedPoint)
+    const data = new FormData();
+
+    if (!savedPoint.items) return;
+
+    data.append('uf', savedPoint.uf);
+    data.append('city', savedPoint.city);
+    data.append('email', savedPoint.email);
+    data.append('name', savedPoint.name);
+    data.append('whatsapp', savedPoint.whatsapp);
+    data.append('image', selectedFile);
+    data.append('latitude', savedPoint.latitude);
+    data.append('longitude', savedPoint.longitude);
+    data.append('items', savedPoint.items?.join(','));
+
+    api.post('/points', data)
       .then(() => {
         setUF('0');
         setCity('0');
@@ -118,8 +135,11 @@ const CreatePoint: React.FC = () => {
           ponto de coleta
         </h1>
 
+        <PointDropzone onFileUpload={setSelectedFile} />
+
         <fieldset>
           <legend><h2>Dados</h2></legend>
+
           <BasicInput
             id="name"
             label="Nome da entidade"
